@@ -1,6 +1,8 @@
 # CS 440 – PCB Simulator Starter (Python)
 # TODO: Add your name(s) and BearID(s)
 
+import argparse
+
 from enum import Enum
 from collections import deque
 
@@ -28,8 +30,19 @@ class PCB:
 
 def main():
     # TODO: parse args
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', default='trace1_happy.txt', type=str, help="File name")
+    args = parser.parse_args()
+    trace = open(args.f, "r")
+    trace_lines = trace.readlines()
+    trace.close()
+    
     # TODO: read trace file
+    for line in trace_lines:
+        print(line)
+    
     # TODO: dispatch commands
+    
     pass
 
 if __name__ == "__main__":
