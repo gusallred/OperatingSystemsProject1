@@ -39,6 +39,8 @@ def main():
     
     # TODO: read trace file
     for line in trace_lines:
+        if line.startswith() == '#':
+            continue
         print(line)
     
     # TODO: dispatch commands
