@@ -1,10 +1,9 @@
-# handlers.py
-# Command handlers
+# pcb_handlers.py
+# Command handlers for PCB state simulation
 
 from collections import deque
-from enum import Enum
 
-import pcb_state_sim as sim
+import pcb_types as types
 
 
 def queue_str(q: deque) -> str:
@@ -26,7 +25,7 @@ def status_snapshot(process_table, ready_q, waiting_q, running):
     lines.append(f"READY: {queue_str(ready_q)}")
     lines.append(f"WAITING: {queue_str(waiting_q)}")
     lines.append("TABLE:")
-    lines.append("PID  NAME  STATE       PRIO  PC  CPUTIME")
+    lines.append(f"{'PID':<5}{'NAME':<6}{'STATE':<12}{'PRIO':<6}{'PC':<4}{'CPUTIME':<9}")
 
     #Print in PID order
     for pcb in sorted(process_table.values(), key=lambda p: p.pid):
@@ -53,8 +52,8 @@ def handle_create(system_state, name, priority_str):
     pid = system_state.next_pid
     system_state.next_pid += 1
 
-    pcb = sim.PCB(pid, name, priority)
-    pcb.state = sim.State.READY
+    pcb = types.PCB(pid, name, priority)
+    pcb.state = types.State.READY
 
     system_state.process_table[name] = pcb
     system_state.ready_q.append(name)
@@ -64,7 +63,7 @@ def handle_create(system_state, name, priority_str):
 def handle_dispatch(process_table, ready_q, running):
     """Dispatch is illegal if a process is already RUNNING"""
     if running is not None:
-        return False, f"CPU is already running {running}", running
+        return False, f"CPU already running {running}", running
     
     # If no ready processes, return error
     if len(ready_q) == 0:
@@ -75,7 +74,7 @@ def handle_dispatch(process_table, ready_q, running):
     pcb = process_table[name]
 
     # Move READY -> RUNNING
-    pcb.state = sim.State.RUNNING
+    pcb.state = types.State.RUNNING
     running = name
 
     return True, f"{name}: READY -> RUNNING", running
@@ -101,7 +100,7 @@ def handle_tick(process_table, running, n_str):
     pcb.pc += n
     pcb.cpuTime += n
 
-    return True, f"{pcb.name}: pc+={n}, cpuTime+= {n}", running
+    return True, f"{pcb.name}: pc+={n} cpuTime+={n}", running
 
 
 def handle_block(process_table, waiting_q, running, name):
@@ -111,12 +110,12 @@ def handle_block(process_table, waiting_q, running, name):
     
     # BLOCK <name> must match the RUNNING process
     if name != running:
-        return False, f"{name} does not match RUNNING process", running
+        return False, f"{name} is not the running process", running
     
     pcb = process_table[name]
 
     # RUNNING -> WAITING and CPU becomes idle
-    pcb.state = sim.State.WAITING
+    pcb.state = types.State.WAITING
     waiting_q.append(name)
     running = None
 
@@ -131,14 +130,14 @@ def handle_wake(process_table, ready_q, waiting_q, running, name):
     pcb = process_table[name]
 
     # Must currently be WAITING to wake
-    if pcb.state != sim.State.WAITING:
+    if pcb.state != types.State.WAITING:
         return False, f"{name} is not WAITING", running
     
     # Remove from WAITING and add to READY
     if not remove_from_queue(waiting_q, name):
         return False, f"{name} not found in WAITING queue", running
     
-    pcb.state = sim.State.READY
+    pcb.state = types.State.READY
     ready_q.append(name)
 
     return True, f"{name}: WAITING -> READY", running
@@ -151,6 +150,9 @@ def handle_exit(process_table, running, name):
     
     pcb = process_table[name]
 
+    if running is None:
+        return False, "CPU is idle", running
+
     # EXIT <name> must match the RUNNING process
     if name != running:
         return False, f"{name} is not the running process", running
@@ -158,7 +160,7 @@ def handle_exit(process_table, running, name):
     pcb = process_table[name]
 
     # RUNNING -> TERMINATED and CPU becomes idle
-    pcb.state = sim.State.TERMINATED
+    pcb.state = types.State.TERMINATED
     running = None
 
     return True, f"{name}: RUNNING -> TERMINATED", running
@@ -171,24 +173,24 @@ def handle_kill(process_table, ready_q, waiting_q, running, name):
     
     pcb = process_table[name]
 
-    if pcb.state == sim.State.TERMINATED:
+    if pcb.state == types.State.TERMINATED:
         return False, f"{name} is already TERMINATED", running
     
-    if pcb.state == sim.State.READY:
+    if pcb.state == types.State.READY:
         remove_from_queue(ready_q, name)
-        pcb.state = sim.State.TERMINATED
-        return True, f"{name}: READY -> TERMINATED", running
+        pcb.state = types.State.TERMINATED
+        return True, f"{name}: READY -> TERMINATED (removed from READY)", running
     
-    if pcb.state == sim.State.WAITING:
+    if pcb.state == types.State.WAITING:
         remove_from_queue(waiting_q, name)
-        pcb.state = sim.State.TERMINATED
-        return True, f"{name}: WAITING -> TERMINATED", running
+        pcb.state = types.State.TERMINATED
+        return True, f"{name}: WAITING -> TERMINATED (removed from WAITING)", running
     
-    if pcb.state == sim.State.RUNNING:
-        pcb.state = sim.State.TERMINATED
+    if pcb.state == types.State.RUNNING:
+        pcb.state = types.State.TERMINATED
         running = None
-        return True, f"{name}: RUNNING -> TERMINATED", running
+        return True, f"{name}: RUNNING -> TERMINATED (CPU now NONE)", running
     
     # If NEW, just mark as TERMINATED
-    pcb.state = sim.State.TERMINATED
+    pcb.state = types.State.TERMINATED
     return True, f"{name}: NEW -> TERMINATED", running

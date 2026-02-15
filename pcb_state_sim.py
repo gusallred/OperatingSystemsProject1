@@ -1,6 +1,6 @@
 # CS 440 – PCB Simulator Starter (Python)
-# Names: David Gonzalez, Augustus Allred
-# Last digits of BearID: 1417 and 9415
+# Names: Augustus Allred, David Gonzalez
+# Last digits of BearID: 9415 and 1417
 # Date: 02/14/2026
 #
 # Usage: python pcb_state_sim.py -f <trace_file>
@@ -10,44 +10,12 @@
 
 import argparse
 
-from enum import Enum
-from collections import deque
-
-import handlers
-
-
-class State(Enum):
-    NEW = 0
-    READY = 1
-    RUNNING = 2
-    WAITING = 3
-    TERMINATED = 4
-
-class PCB:
-    def __init__(self, pid, name, priority):
-        self.pid = pid
-        self.name = name
-        self.priority = priority
-        self.state = State.NEW
-        self.pc = 0
-        self.cpuTime = 0
-
-class PCBStates:
-    def __init__(self):
-        self.process_table = {}    # name -> PCB
-        self.ready_q = deque()     # FIFO of process names
-        self.waiting_q = deque()   # FIFO of process names
-        self.running = None        # process name or None
-
-        self.step = 0
-        self.next_pid = 1
-
-        self.BEARID_LAST_DIGIT = max(7, 5)
-        self.AUTO_INTERVAL = self.BEARID_LAST_DIGIT + 3
+import pcb_handlers as handlers
+import pcb_types as types
 
 
 def main():
-    # TODO: parse args
+    # Parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', default='trace1_happy.txt', type=str, help="File name")
     args = parser.parse_args()
@@ -55,7 +23,7 @@ def main():
     trace_lines = trace.readlines()
     trace.close()
 
-    system_state = PCBStates()
+    system_state = types.PCBStates()
     print(f"BearID last digit: {system_state.BEARID_LAST_DIGIT}")
     print(f"Auto STATUS every: {system_state.AUTO_INTERVAL} steps\n")
     

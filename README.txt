@@ -1,5 +1,6 @@
 CS 440 – Programming Assignment 1
 PCB & State Transition Simulator
+Augustus Allred, David Gonzalez
 
 Course: CS 440 – Operating Systems
 Language: Python
@@ -9,7 +10,7 @@ Language: Python
 1. BearID Auto-STATUS Rule
 
 BearID last digit:
-7
+max(5, 7) = 7
 
 Auto-STATUS interval (N + 3):
 10
@@ -23,13 +24,14 @@ auto-STATUS interval is 10 steps.
 
 2. Error Handling
 (We need to add this when we make last fixes)
-
+Chosen ERROR line:
+[step=6] CMD=DISPATCH | ERROR | CPU already running P1
 
 Explanation:
 This command is illegal because it violates the simulator’s process state rules. In this case,
-the command attempted to perform an operation that is not allowed in the current system state
-(for example, dispatching when the CPU is already running or blocking a process when the CPU
-is idle). The simulator correctly reports an ERROR and continues execution.
+the command attempted to perform a DISPATCH, which is not allowed when the CPU is already running.
+The error message shows that P1 was already running, and must be blocked, exited, or killed for any
+other process to be dispatched. The simulator correctly reports an ERROR and continues execution.
 
 
 

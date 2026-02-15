@@ -1,5 +1,5 @@
 from collections import deque
-from handlers import State, handle_dispatch, handle_tick, handle_block, handle_wake, handle_exit
+from pcb_handlers import State, handle_dispatch, handle_tick, handle_block, handle_wake, handle_exit
 
 
 class PCB:
